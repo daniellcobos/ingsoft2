@@ -1,0 +1,140 @@
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Sensores</title>
+    <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/bulma@1.0.2/css/bulma.min.css"
+  >
+<link href="https://cdn.datatables.net/2.1.8/css/dataTables.dataTables.min.css" rel="stylesheet">
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="https://cdn.datatables.net/2.1.8/js/dataTables.min.js"></script>
+</head>
+<body>
+  <div class="fixed-grid">
+    <div class="grid">
+      <div class="cell">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Tiempo</th>
+              <th>Temperatura</th>
+              <th>Humedad</th>
+            </tr>
+          </thead>
+          <tbody id="tbodysensor">
+      
+          </tbody>
+        </table>
+      </div>
+    <div class="cell">
+      <h1 class="title"> Dato mas Reciente</h1>
+      <h2>Tiempo:</h2><h3 id ="lasttime"></h3>
+      <h2>Temperatura:</h2><h3 id ="lasttemp"></h3>
+      <h2>Humedad:</h2><h3 id ="lasthumd"></h3>
+      <button class="button is-success" id="turnon">
+        Prender Bombillo
+      </button>
+      <button class="button is-danger" id="turnoff">
+        Apagar Bombillo
+      </button>
+      <h2 id="status"></h2>
+    </div>
+    </div>
+ 
+  </div>
+ 
+</body>
+<script>
+const tbodysensor = document.getElementById("tbodysensor")
+const endpoint = 'http://134.209.212.23/test'; // Cambia por la URL de tu backend GraphQL
+const status = document.getElementById("status")
+const query = `
+{
+  sensores {
+    Tiempo
+    Humedad
+    Temperatura
+  }
+}
+`;
+
+fetch(endpoint, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({ query }),
+})
+  .then(response => response.json())
+  .then(data => {
+    renderEverything(data);
+  })
+  .catch(error => {
+    console.error('Error:', error);
+  });
+
+
+  const renderEverything = (data) => {
+    const lasttwenty = data.data.sensores.slice(-20);
+    const last = data.data.sensores.slice(-1)[0];
+    for(sensor of lasttwenty){
+      const trow = document.createElement('tr')
+      const tiempotd = document.createElement('td')
+      const temptd = document.createElement('td')
+      const humedadtd = document.createElement('td')
+      tiempotd.innerText = sensor["Tiempo"]
+      temptd.innerText = sensor["Temperatura"]
+      humedadtd.innerText = sensor["Humedad"]
+      trow.appendChild(tiempotd)
+      trow.appendChild(temptd)
+      trow.appendChild(humedadtd)
+      tbodysensor.appendChild(trow)
+    }
+    console.log(last)
+    document.getElementById("lasttime").innerText = last["Tiempo"]
+    document.getElementById("lasttemp").innerText = last["Temperatura"]
+    document.getElementById("lasthumd").innerText = last["Humedad"]
+
+  } 
+
+const turnon = document.getElementById("turnon")
+const turnoff = document.getElementById("turnoff")
+
+turnon.addEventListener('click', () => {
+      // Endpoint para la petición
+      const endpoint = 'http://134.209.212.23/turnligthon'; // Cambia por tu URL
+
+      // Hacer la petición GET
+      fetch(endpoint)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`Error en la petición: ${response.status}`);
+          }
+          return response.json();
+        })
+        .then(data => {
+          // Mostrar los datos en la consola
+          updateStatus(data);})})
+
+turnoff.addEventListener('click', () => {
+      // Endpoint para la petición
+      const endpoint = 'http://134.209.212.23/turnligthoff'; // Cambia por tu URL
+
+      // Hacer la petición GET
+      fetch(endpoint)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`Error en la petición: ${response.status}`);
+          }
+          return response.json();
+        })
+        .then(data => {
+          // Mostrar los datos en la consola
+          updateStatus(data);})})
+
+const updateStatus = (data) => {
+  status.innerText = data.data.message
+}
+
+</script>
